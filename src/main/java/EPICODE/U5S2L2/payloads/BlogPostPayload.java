@@ -1,11 +1,13 @@
 package EPICODE.U5S2L2.payloads;
 
+import jakarta.persistence.MappedSuperclass;
 import lombok.*;
 
 @NoArgsConstructor
 @Getter
 @Setter
 @ToString
+@MappedSuperclass
 public class BlogPostPayload {
 
     private String category;

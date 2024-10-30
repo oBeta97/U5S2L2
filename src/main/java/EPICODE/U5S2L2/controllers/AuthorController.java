@@ -1,9 +1,11 @@
 package EPICODE.U5S2L2.controllers;
 
 import EPICODE.U5S2L2.entities.Author;
+import EPICODE.U5S2L2.exceptions.NotFoundException;
 import EPICODE.U5S2L2.payloads.AuthorPayload;
 import EPICODE.U5S2L2.services.AuthorService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,12 +19,16 @@ public class AuthorController {
     private AuthorService as;
 
     @GetMapping
-    public List<Author> readAuthor(){
-        return as.findAll();
+    public Page<Author> readAuthor(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy
+    ){
+        return as.findAll(page, size, sortBy);
     }
 
     @GetMapping("/{AuthorId}")
-    public Author readSingleAuthor(@PathVariable long AuthorId){
+    public Author readSingleAuthor(@PathVariable long AuthorId) throws NotFoundException {
         return as.findById(AuthorId);
     }
 

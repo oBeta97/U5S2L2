@@ -3,7 +3,14 @@ package EPICODE.U5S2L2.services;
 import EPICODE.U5S2L2.U5S2L2Application;
 import EPICODE.U5S2L2.entities.Author;
 import EPICODE.U5S2L2.entities.Author;
+import EPICODE.U5S2L2.exceptions.NotFoundException;
 import EPICODE.U5S2L2.payloads.AuthorPayload;
+import EPICODE.U5S2L2.repositories.AuthorRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -13,19 +20,21 @@ import java.util.Optional;
 @Service
 public class AuthorService {
 
-    private List<Author> authorList = new ArrayList<>();
+    @Autowired
+    private AuthorRepository authorRepo;
 
-    public List<Author> findAll(){
-        return this.authorList;
+    public Page<Author> findAll(int page, int size, String sortBy){
+
+        Pageable pageable = PageRequest.of(page,size, Sort.by(sortBy));
+
+        return this.authorRepo.findAll(pageable);
     }
 
-    public Author findById(long id){
+    public Author findById(long id) {
 
-        Optional<Author> res = this.authorList.stream()
-                .filter(bp -> id == bp.getId())
-                .findFirst();
+        Optional<Author> res = authorRepo.findById(id);
 
-        if (res.isEmpty()) throw new RuntimeException("Author non trovato");
+        if (res.isEmpty()) throw new NotFoundException(Author.class);
 
         return res.get();
     }
@@ -37,9 +46,8 @@ public class AuthorService {
 
         for(AuthorPayload payload : payloadList){
             Author bp = new Author(payload);
-            bp.setId(U5S2L2Application.r.nextInt(0,1000));
 
-            authorList.add(bp);
+            authorRepo.save(bp);
             res.add(bp);
         }
 
@@ -48,16 +56,15 @@ public class AuthorService {
 
     public Author updateList(AuthorPayload bpp, long idToUpdate){
 
-        this.deleteAuthor(idToUpdate);
+        // check if the Author exist
+        this.findById(idToUpdate);
 
-        // create the updated Author
-        Author bp = new Author(bpp);
-        bp.setId(idToUpdate);
+        // Create an Author obj by the payload
+        Author res = new Author(bpp);
+        res.setId(idToUpdate);
 
-        // add updated Author to the "DB"
-        this.authorList.add(bp);
-
-        return bp;
+        // save in this case will update the existing row
+        return authorRepo.save(res);
 
     }
 
@@ -67,7 +74,7 @@ public class AuthorService {
         Author res = this.findById(idToDelete);
 
         // remove the Author to the "DB"
-        this.authorList = new ArrayList<>(this.authorList.stream().filter(b -> b.getId() != idToDelete).toList());
+        authorRepo.deleteById(idToDelete);
 
         return res;
     }

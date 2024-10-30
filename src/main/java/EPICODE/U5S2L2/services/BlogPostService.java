@@ -1,8 +1,13 @@
 package EPICODE.U5S2L2.services;
 
 import EPICODE.U5S2L2.U5S2L2Application;
+import EPICODE.U5S2L2.entities.Author;
 import EPICODE.U5S2L2.entities.BlogPost;
+import EPICODE.U5S2L2.exceptions.NotFoundException;
 import EPICODE.U5S2L2.payloads.BlogPostPayload;
+import EPICODE.U5S2L2.repositories.AuthorRepository;
+import EPICODE.U5S2L2.repositories.BlogPostRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -13,25 +18,27 @@ import java.util.stream.Collectors;
 @Service
 public class BlogPostService {
 
-    private List<BlogPost> blogPostList = new ArrayList<>();
+    @Autowired
+    private BlogPostRepository blogPostRepo;
+
+    @Autowired
+    private AuthorRepository authorRepo;
 
     public List<BlogPost> findAll(){
-        return this.blogPostList;
+        return blogPostRepo.findAll();
     }
 
     public BlogPost findById(long id){
 
-        Optional<BlogPost> res = this.blogPostList.stream()
-                .filter(bp -> id == bp.getId())
-                .findFirst();
+        Optional<BlogPost> res = blogPostRepo.findById(id);
 
-        if (res.isEmpty()) throw new RuntimeException("blogpost non trovato");
+        if (res.isEmpty()) throw new NotFoundException(BlogPost.class);
 
         return res.get();
     }
 
 
-    public List<BlogPost> saveBlogPost (List<BlogPostPayload> payloadList){
+    public List<BlogPost> saveBlogPost (List<BlogPostPayload> payloadList, long authorId){
 
         List<BlogPost> res = new ArrayList<>();
 
@@ -39,7 +46,7 @@ public class BlogPostService {
             BlogPost bp = new BlogPost(payload);
             bp.setId(U5S2L2Application.r.nextInt(0,1000));
 
-            blogPostList.add(bp);
+            blogPostRepo.save(bp);
             res.add(bp);
         }
 
@@ -48,16 +55,15 @@ public class BlogPostService {
 
     public BlogPost updateList(BlogPostPayload bpp, long idToUpdate){
 
-        this.deleteBlogPost(idToUpdate);
+        // check if the Author exist
+        this.findById(idToUpdate);
 
-        // create the updated blogpost
-        BlogPost bp = new BlogPost(bpp);
-        bp.setId(idToUpdate);
+        // Create an Author obj by the payload
+        BlogPost res = new BlogPost(bpp);
+        res.setId(idToUpdate);
 
-        // add updated blogpost to the "DB"
-        this.blogPostList.add(bp);
-
-        return bp;
+        // save in this case will update the existing row
+        return blogPostRepo.save(res);
 
     }
 
@@ -67,7 +73,7 @@ public class BlogPostService {
         BlogPost res = this.findById(idToDelete);
 
         // remove the blogpost to the "DB"
-        this.blogPostList = new ArrayList<>(this.blogPostList.stream().filter(b -> b.getId() != idToDelete).toList());
+        blogPostRepo.deleteById(idToDelete);
 
         return res;
     }

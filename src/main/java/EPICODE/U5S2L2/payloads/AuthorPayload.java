@@ -1,5 +1,6 @@
 package EPICODE.U5S2L2.payloads;
 
+import jakarta.persistence.MappedSuperclass;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -8,6 +9,7 @@ import java.time.LocalDate;
 @Getter
 @Setter
 @ToString
+@MappedSuperclass
 public class AuthorPayload {
 
     private String name;
